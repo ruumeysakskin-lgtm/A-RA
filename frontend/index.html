@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Akıllı Dosya Yöneticisi</title>
+    <style>
+        body { font-family: sans-serif; max-width: 600px; margin: 50px auto; background: #f0f0f0; }
+        .box { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .tag { background: #e74c3c; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; text-transform: uppercase; }
+        .file-item { border-left: 5px solid #3498db; background: #f9f9f9; padding: 15px; margin-bottom: 10px; border-radius: 5px; }
+        input[type="text"], input[type="file"] { width: 90%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 5px; }
+        button { padding: 10px 15px; background: #3498db; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #2980b9; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h2>🧠 Akıllı Dosya Yükle</h2>
+        <input type="file" id="fileInput">
+        <button onclick="yukle()">Yükle (Yapay Zeka İnceleyecek)</button>
+        <p id="durum" style="color: #e67e22; font-size: 14px; font-weight: bold;"></p>
+    </div>
+
+    <div class="box">
+        <h2>🔍 Dosyalarda Ara</h2>
+        <p style="font-size: 12px; color: gray;">İçeriğe göre arama yapın (Örn: "tree", "finans", "belge")</p>
+        <input type="text" id="searchInput" placeholder="Ne arıyorsunuz?..." onkeyup="ara()">
+    </div>
+
+    <div class="box">
+        <h2>📁 Dosyalarım</h2>
+        <div id="liste"></div>
+    </div>
+
+    <script>
+        async function listele(query = "") {
+            const url = query ? `http://localhost:8000/search?q=${query}` : 'http://localhost:8000/files';
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+                
+                if(data.length === 0) {
+                    document.getElementById('liste').innerHTML = "<p>Dosya bulunamadı.</p>";
+                    return;
+                }
+
+                document.getElementById('liste').innerHTML = data.map(f => 
+                    `<div class="file-item">
+                        <p style="margin: 0 0 10px 0;"><strong>📁 Dosya Adı:</strong> ${f.filename}</p>
+                        <p style="margin: 0 0 10px 0;"><strong>🏷️ Kategori:</strong> <span class="tag">${f.category || 'Belirsiz'}</span></p>
+                        <p style="margin: 0; font-size: 14px; color: #555;"><strong>🤖 AI Notu:</strong> <em>${f.description || 'Açıklama yok'}</em></p>
+                    </div>`
+                ).join('');
+            } catch (error) {
+                console.log("Bağlantı bekleniyor...");
+            }
+        }
+
+        function ara() {
+            const kelime = document.getElementById('searchInput').value;
+            listele(kelime);
+        }
+
+        async function yukle() {
+            const fileInput = document.getElementById('fileInput');
+            const durum = document.getElementById('durum');
+            
+            if (fileInput.files.length === 0) {
+                alert("Lütfen önce bir dosya seçin!");
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const formData = new FormData();
+            formData.append("file", file);
+            
+            durum.innerText = "⏳ Yapay Zeka dosyayı inceliyor, lütfen bekleyin...";
+            
+            try {
+                const response = await fetch('http://localhost:8000/upload', { method: 'POST', body: formData });
+                if (response.ok) {
+                    durum.innerText = "✅ Dosya başarıyla analiz edildi ve kaydedildi!";
+                    fileInput.value = ""; 
+                    listele(); 
+                    setTimeout(() => durum.innerText = "", 4000); 
+                } else {
+                    durum.innerText = "❌ Yükleme sırasında hata oluştu.";
+                }
+            } catch(e) {
+                durum.innerText = "❌ Sunucuya bağlanılamadı. Terminalde sunucu çalışıyor mu?";
+            }
+        }
+        
+        listele();
+    </script>
+</body>
+</html>

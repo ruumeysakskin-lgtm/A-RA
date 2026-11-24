@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIRA - Akıllı Dosya Yönetimi</title>
+    <style>
+        :root {
+            --bg-color: #f3f4f6;
+            --sidebar-bg: #1f2937;
+            --primary: #6366f1;
+            --text-dark: #111827;
+            --text-gray: #6b7280;
+        }
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { margin: 0; display: flex; height: 100vh; background-color: var(--bg-color); color: var(--text-dark); overflow: hidden; }
+        
+        .sidebar { width: 250px; background-color: var(--sidebar-bg); color: white; display: flex; flex-direction: column; padding: 20px; }
+        .logo { font-size: 28px; font-weight: bold; margin-bottom: 40px; display: flex; align-items: center; gap: 10px; color: #fff; letter-spacing: 1px; }
+        .menu-item { padding: 15px 10px; margin-bottom: 10px; border-radius: 8px; cursor: pointer; transition: 0.3s; display: flex; align-items: center; gap: 10px; color: #d1d5db; }
+        .menu-item:hover, .menu-item.active { background-color: #374151; color: white; }
+        
+        .main-content { flex: 1; padding: 40px; overflow-y: auto; }
+        
+        .search-container { position: relative; max-width: 800px; margin: 0 auto 40px auto; }
+        .search-bar { width: 100%; padding: 20px 20px 20px 50px; font-size: 18px; border: none; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); outline: none; transition: 0.3s; }
+        .search-bar:focus { box-shadow: 0 10px 25px rgba(99, 102, 241, 0.2); border: 2px solid var(--primary); }
+        .search-icon { position: absolute; left: 20px; top: 22px; font-size: 20px; }
+        .ai-sparkle { position: absolute; right: 20px; top: 18px; font-size: 24px; cursor: pointer; transition: 0.3s; }
+
+        .grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; max-width: 1000px; margin: 0 auto; }
+        .card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+        .card h3 { margin-top: 0; color: var(--text-dark); display: flex; align-items: center; gap: 10px; }
+        
+        .file-list { display: flex; flex-direction: column; gap: 15px; }
+        .file-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: #f9fafb; border-radius: 10px; border-left: 4px solid var(--primary); }
+        .file-info h4 { margin: 0 0 5px 0; font-size: 16px; }
+        .file-info p { margin: 0; font-size: 13px; color: var(--text-gray); }
+        .tag { background: #e0e7ff; color: var(--primary); padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+        
+        .platform-list { display: flex; flex-direction: column; gap: 15px; }
+        .platform { display: flex; align-items: center; justify-content: space-between; padding: 10px; border: 1px solid #e5e7eb; border-radius: 8px; }
+        .status { width: 10px; height: 10px; background: #10b981; border-radius: 50%; }
+
+        #loading { display: none; text-align: center; margin-top: 20px; color: var(--primary); font-weight: bold; }
+        #search-results { display: none; margin-top: 20px; animation: fadeIn 0.5s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="logo">✨ AIRA</div>
+        <div class="menu-item active">🏠 Ana Sayfa</div>
+        <div class="menu-item">📁 Akıllı Klasörler</div>
+        <div class="menu-item">🔗 Bağlantılar</div>
+        <div class="menu-item">⚙️ Ayarlar</div>
+    </div>
+
+    <div class="main-content">
+        <h1 style="text-align: center; color: #1f2937; margin-bottom: 30px;">Merhaba, AIRA senin için ne bulsun?</h1>
+        
+        <div class="search-container">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="searchInput" class="search-bar" placeholder="Dosyalarda, Bulut Sürücülerde ve İçeriklerde ara..." onkeypress="handleSearch(event)">
+            <span class="ai-sparkle" onclick="startFakeSearch()" title="AIRA ile Ara">✨</span>
+        </div>
+
+        <div id="loading">✨ AIRA tüm kaynaklarını tarıyor...</div>
+        <div id="search-results" class="card" style="max-width: 1000px; margin: 0 auto 30px auto; border-left: 5px solid #10b981;">
+            <h3>✅ AIRA Eşleşmesi Bulundu</h3>
+            <p>Aradığın konuyla ilgili <strong>Banka_Dekontu_Ekim.pdf</strong> dosyasını buldum. <br> 
+            <small style="color:var(--text-gray)">AIRA Analizi: "Bu dosya 15 Ekim tarihli ofis kira ödemesini içeriyor."</small></p>
+        </div>
+
+        <div class="grid" id="dashboard-grid">
+            <div class="card">
+                <h3>🤖 AIRA Akıllı Kategoriler</h3>
+                <div class="file-list">
+                    <div class="file-item">
+                        <div class="file-info">
+                            <h4>📊 Q3_Finans_Raporu.xlsx</h4>
+                            <p>AIRA: Finansal büyüme verileri analiz edildi.</p>
+                        </div>
+                        <span class="tag">FİNANS</span>
+                    </div>
+                    <div class="file-item" style="border-left-color: #10b981;">
+                        <div class="file-info">
+                            <h4>📝 Tasarim_Notlari.docx</h4>
+                            <p>AIRA: Kullanıcı arayüzü iyileştirme fikirleri.</p>
+                        </div>
+                        <span class="tag" style="background: #d1fae5; color: #047857;">TASARIM</span>
+                    </div>
+                    <div class="file-item" style="border-left-color: #f59e0b;">
+                        <div class="file-info">
+                            <h4>🖼️ IMG_9921.jpg</h4>
+                            <p>AIRA: Resim içeriği: "Açık otoparkta kırmızı bir araç".</p>
+                        </div>
+                        <span class="tag" style="background: #fef3c7; color: #b45309;">GÖRSEL</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>🔗 Entegre Kaynaklar</h3>
+                <p style="font-size: 13px; color: var(--text-gray);">AIRA'nın bağlı olduğu veri kaynakları:</p>
+                <div class="platform-list">
+                    <div class="platform"><span>☁️ Google Drive</span><span class="status"></span></div>
+                    <div class="platform"><span>📝 Notion Docs</span><span class="status"></span></div>
+                    <div class="platform"><span>💻 Yerel Disk (C:)</span><span class="status"></span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function handleSearch(e) { if (e.key === 'Enter') startFakeSearch(); }
+        function startFakeSearch() {
+            const input = document.getElementById('searchInput').value;
+            if(!input) return;
+            document.getElementById('dashboard-grid').style.opacity = '0.3';
+            document.getElementById('search-results').style.display = 'none';
+            document.getElementById('loading').style.display = 'block';
+            setTimeout(() => {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('search-results').style.display = 'block';
+                document.getElementById('dashboard-grid').style.opacity = '1';
+            }, 1500);
+        }
+    </script>
+</body>
+</html>
